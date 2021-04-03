@@ -50,6 +50,7 @@ class DBHelper(
         dropTables()
         createTables()
         fillTables()
+        sql()
         disconnect()
     }
 
@@ -181,7 +182,7 @@ class DBHelper(
             while (line2 != null) {
                 val tokens2 = line2.split(";")
                 val token = tokens2[1]
-                addBatch("INSERT INTO `department` (`Title`) VALUES ('$token')")
+                         addBatch("INSERT INTO `department` (`Title`) VALUES ('$token')")
                 line2 = department.readLine()
             }
             while (line3 != null) {
@@ -251,6 +252,19 @@ class DBHelper(
                 line = academicPerformance.readLine()
             }
             executeBatch()
+        }
+
+    }
+    private fun sql() {
+        val sql="SELECT  ID,Lastname, Firstname, Middlename, student.Group_id,MIN(CASE WHEN Attempt=1 AND Score BETWEEN 71 AND 85 THEN (SELECT 2100 as stip) WHEN Attempt=1 AND Score>=86 THEN (SELECT 3100 as stip3) ELSE (SELECT 0 as stip2) END) as stipend" +
+                " FROM student,academic_performance, (SELECT * FROM curriculum_subject WHERE Reporting_form IN('Экзамен', 'Диф.зачет')) as cs, acad_group," +
+                "   (SELECT (CASE WHEN YEAR(now())-beginning_year_education=1 AND MONTH(now()) BETWEEN 2 AND 6 THEN (SELECT 1 as sm1) WHEN YEAR(now())-beginning_year_education=1 AND MONTH(now())>6 THEN (SELECT 2 as sm2) WHEN YEAR(now())-beginning_year_education=2 AND MONTH(now()) BETWEEN 2 AND 6 THEN (SELECT 3 as sm3) WHEN YEAR(now())-beginning_year_education=2 AND MONTH(now())>6 THEN (SELECT 4 as sm4) WHEN YEAR(now())-beginning_year_education=3 AND MONTH(now()) BETWEEN 2 AND 6 THEN (SELECT 5 as sm5) WHEN YEAR(now())-beginning_year_education=3 AND MONTH(now())>6 THEN (SELECT 6 as sm6) WHEN YEAR(now())-beginning_year_education=4 AND MONTH(now()) BETWEEN 2 AND 6 THEN (SELECT 7 as sm7) WHEN YEAR(now())-beginning_year_education=4 AND MONTH(now())>6 THEN (SELECT 8 as sm8) END) as lastsem, curriculum.Curriculum_id FROM curriculum)  as filt" +
+                "  WHERE filt.Curriculum_id=acad_group.Curriculum_id AND acad_group.Group_id=student.Group_id AND student.ID=academic_performance.Student_id AND   filt.lastsem=cs.Semestr AND academic_performance.Subject_id=cs.Subject_id GROUP BY ID ORDER BY Group_id, Lastname"
+        val rs=stmt?.executeQuery(sql)
+
+        while(rs?.next()==true) {
+            for(i in 1..6) { print(rs.getString(i) + " ") }
+            print("\n")
         }
     }
 }
